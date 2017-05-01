@@ -266,6 +266,7 @@ bool startGame()
 	bool isFall = false;
 	bool onMenu = false;
 	bool isMenu = false;
+	bool cont = false;
 	Clock clock;
 	Arrow arrow("arrow.png", 20, 400);
 	Ship ship("ship.png", 0, 390);
@@ -281,6 +282,16 @@ bool startGame()
 	spconvas.setTexture(txconvas);
 	spconvas.setPosition(0, 0);
 
+	//лини€ финиша
+	Image imline;
+	imline.loadFromFile("images/line.png");
+	Texture txline;
+	txline.loadFromImage(imline);
+	Sprite spline;
+	spline.setTexture(txline);
+	spline.setTextureRect(IntRect(0, 0, 25, 577));
+	spline.setScale(1, 1.33);
+	spline.setPosition(1341, 0);
 
 
 
@@ -306,7 +317,8 @@ bool startGame()
 
 			if(isMove) moveship(ship, arrow, time);
 
-			onMenu = menu.menuNum;
+			if(!cont) onMenu = menu.onMenu;
+			cont = false;
 			if (isMove) arrow.move(window, ship);
 			if (event.type == Event::MouseButtonReleased)
 				if (event.key.code == Mouse::Left)
@@ -319,7 +331,7 @@ bool startGame()
 		if (isMenu || isFall)
 		{
 			if (menu.click(window) == 1) return true;
-			if (menu.click(window) == 3) isMenu = !isMenu;
+			if (menu.click(window) == 3) { isMenu = !isMenu; cont = true; menu.onMenu = false; };
 		}
 
 		//¬заимодействие корабл€ и черных дыр
@@ -334,6 +346,7 @@ bool startGame()
 		window.draw(spconvas);
 		window.draw(hole1.sprite);
 		window.draw(hole2.sprite);
+		window.draw(spline);
 		if(!isFall) window.draw(ship.sprite);
 		window.draw(arrow.sprite);
 		if (isMenu || isFall)

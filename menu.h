@@ -5,6 +5,7 @@ using namespace sf;
 class Menu
 {
 public:
+	bool onMenu;
 	Image image;
 	Texture texture;
 	Sprite sprite;
@@ -19,6 +20,8 @@ public:
 
 Menu::Menu(float X1, float Y1, float X2, float Y2, float X3, float Y3)
 {
+	onMenu = false;
+
 	x1 = X1; y1 = Y1;  x2 = X2; y2 = Y2, x3 = X3, y3 = Y3;
 	menuNum = 0;
 	font.loadFromFile("spacefont.ttf");
@@ -53,14 +56,18 @@ int Menu::click(RenderWindow& window)
 	txt2.setFillColor(Color(255, 255, 255));
 	txt3.setFillColor(Color(255, 255, 255));
 	
-	if (IntRect(x1, y1, 440, 35).contains(Mouse::getPosition(window))) { txt1.setFillColor(Color(0, 0, 255)), menuNum = 1; }
-	else
-		if (IntRect(x2, y2, 240, 35).contains(Mouse::getPosition(window))) { txt2.setFillColor(Color(0, 0, 255)), menuNum = 2; }
-		else 
-			if (IntRect(x3, y3, 440, 35).contains(Mouse::getPosition(window))) { txt3.setFillColor(Color(0, 0, 255)), menuNum = 3; }
-			else 
-				if (IntRect(1050, 0, 416, 768).contains(Mouse::getPosition(window))) menuNum = 111;
-				else menuNum = 0;
+	if (IntRect(x1, y1, 440, 35).contains(Mouse::getPosition(window))) { txt1.setFillColor(Color(0, 0, 255)), menuNum = 1; onMenu = true; }
+    else
+		if (IntRect(x2, y2, 240, 35).contains(Mouse::getPosition(window))) { txt2.setFillColor(Color(0, 0, 255)), menuNum = 2; onMenu = true; }
+		else
+			if (IntRect(x3, y3, 440, 35).contains(Mouse::getPosition(window))) { txt3.setFillColor(Color(0, 0, 255)), menuNum = 3; onMenu = true;}
+			else
+				if (IntRect(1050, 0, 416, 768).contains(Mouse::getPosition(window))) onMenu = true;
+				else
+				{
+					menuNum = 0;
+					onMenu = false;
+				}
 
 	if (Mouse::isButtonPressed(Mouse::Left))
 	{
@@ -68,7 +75,7 @@ int Menu::click(RenderWindow& window)
 		{
 		case 1: { return 1; break; }
 		case 2: { window.close(); break; }
-		case 3: { return 3; break; }
+		case 3: {return 3; break; }
 		}
 	}
 
