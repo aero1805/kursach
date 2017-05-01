@@ -131,7 +131,7 @@ public:
 	Sprite sprite;
 	Ship(String, float, float);
 	~Ship() { delete v; };
-	void go(float, Hole&);
+	void go(float, Hole&, Hole&);
 };
 
 Ship::Ship(String F, float X, float Y)
@@ -145,6 +145,7 @@ Ship::Ship(String F, float X, float Y)
 	texture.loadFromImage(image);
 	sprite.setTexture(texture);
 	sprite.setScale(0.03, 0.02);
+	sprite.setPosition(x, y);
 }
 
 
@@ -183,9 +184,9 @@ Hole::Hole(String F, float X, float Y, double M)
 }
 void Hole::come(float time, Ship& ship)
 {
-	r = sqrt(pow((ship.x - x), 2) + pow((ship.y - y), 2));
-	v->x = m*(x - ship.x) / pow(r, 3);
-	v->y = m*(y - ship.y) / pow(r, 3);
+	r = sqrt(pow((ship.x - (x + 70)), 2) + pow((ship.y - (y + 70)), 2));
+	v->x = m*((x + 70) - ship.x) / pow(r, 3);
+	v->y = m*((y + 70) - ship.y) / pow(r, 3);
 }
 void Hole::destroy(RenderWindow& window, Ship& ship, bool* isFall)
 {
@@ -198,7 +199,7 @@ void Hole::destroy(RenderWindow& window, Ship& ship, bool* isFall)
 	}
 }
 
-//Метод движения стрелочки
+//Метод движения стрелочки (задания начальной скорости корабля)
 void Arrow::move(RenderWindow& window, Ship& ship)
 {
 	float X = 0, Y = 0;
@@ -208,37 +209,70 @@ void Arrow::move(RenderWindow& window, Ship& ship)
 	float rotation = (atan2(Y, X)) * 180 / 3.14159265 - 45;
 	sprite.setRotation(rotation);
 	float k = sqrt(pow(X, 2) + pow(Y, 2)) / 1000;
-	size = k;
+	size = fmin(k, 0.2);
 	sprite.setScale(size, size);
-	ship.v->x = 10 * size*cos(atan2(Y, X));
-	ship.v->y = 10 * size*sin(atan2(Y, X));
+	ship.v->x = 10 * size*cos((rotation + 45)*3.14159265 / 180);
+	ship.v->y = 10 * size*sin((rotation + 45)*3.14159265 / 180);
 }
 
 //Метод движения корабля
-void Ship::go(float time, Hole& hole)
+void Ship::go(float time, Hole& hole1, Hole& hole2)
 {
-	Vector c(v->x + hole.v->x*time, v->y + hole.v->y*time);
+	Vector c(v->x + hole1.v->x*time + hole2.v->x*time, v->y + hole1.v->y*time + hole2.v->y*time);
 	x += c.x*time;
 	y += c.y*time;
-	hole.v->x = 0;
-	hole.v->y = 0;
+	hole1.v->x = 0;
+	hole1.v->y = 0;
+	hole2.v->x = 0;
+	hole2.v->y = 0;
 	sprite.setPosition(x, y);
 }
 
+//функция движения корабля вверх-вниз на старте игры
+void moveship(Ship& ship, Arrow& arrow, float time)
+{
+	if(Keyboard::isKeyPressed(Keyboard::Up))
+		{
+			ship.y = fmax(ship.y-5 * time, 0);
+			arrow.y = fmax(arrow.y - 5 * time, 0);
+		}
+
+	if (Keyboard::isKeyPressed(Keyboard::Down))
+		{
+			ship.y = fmin(ship.y + 5 * time, 740);
+			arrow.y = fmin(arrow.y + 5 * time, 740);
+		}
+	ship.sprite.setPosition(ship.x, ship.y);
+	arrow.sprite.setPosition(ship.x + 20, ship.y + 10);
+}
+/////////////////////////////////////////////////
+void lose(RenderWindow& window)
+{
+	Font font;
+	font.loadFromFile("spacefont.ttf");
+	Text text("", font, 40);
+	text.setString(L"    Ваш корабль пропал\nза горизонтом событий");
+	text.setPosition(90, 285);
+	
+	window.draw(text);
+}
+/////////////////////////////////////////////////
 //Функция начала игры (почти что main)
 bool startGame()
 {
-	RenderWindow window(sf::VideoMode(1000, 1000), "Kursach", Style::Fullscreen);
+	RenderWindow window(VideoMode(1366, 768), "Kursach", Style::Fullscreen);
 	window.setVerticalSyncEnabled(true);//Вертикальная синхронизация кадров с монитором
 	bool isMove = true;
 	bool isFall = false;
 	bool onMenu = false;
+	bool isMenu = false;
 	Clock clock;
-	Arrow arrow("arrow.png", 15, 15);
-	Ship ship("ship.png", 0, 0);
-	Hole hole1("hole.png", 200, 500, 10000);
-	Menu menu("111.png", "333.png", 1000, 30, 1000, 90);
+	Arrow arrow("arrow.png", 20, 400);
+	Ship ship("ship.png", 0, 390);
+	Hole hole1("hole.png", 400, 100, 10000), hole2("hole.png", 700, 500, 10000);
+	Menu menu(1075, 160, 1205, 200, 1055, 120);
 
+	//фон
 	Image imconvas;
 	imconvas.loadFromFile("images/stars.jpg");
 	Texture txconvas;
@@ -247,6 +281,9 @@ bool startGame()
 	spconvas.setTexture(txconvas);
 	spconvas.setPosition(0, 0);
 
+
+
+
 	while (window.isOpen())
 	{
 		Vector2i pixelPos = Mouse::getPosition(window);
@@ -254,13 +291,22 @@ bool startGame()
 		float time = clock.getElapsedTime().asMicroseconds();
 		clock.restart();
 		time = time / 5000;
-		onMenu = menu.menuNum;
+
+		if (Keyboard::isKeyPressed(Keyboard::Tab))
+		{
+			isMenu = !isMenu;
+		}
+		
+
+		
 		while (window.pollEvent(event))
 		{
 			if (event.type == Event::Closed)
 				window.close();
 
+			if(isMove) moveship(ship, arrow, time);
 
+			onMenu = menu.menuNum;
 			if (isMove) arrow.move(window, ship);
 			if (event.type == Event::MouseButtonReleased)
 				if (event.key.code == Mouse::Left)
@@ -268,24 +314,41 @@ bool startGame()
 					if(!onMenu) isMove = false;
 				}
 		}
-		menu.click(window);
 
-		if (menu.click(window) == 1) return true;
-		if(!isFall) hole1.come(time, ship);
-		hole1.destroy(window, ship, &isFall);
-		if (!isMove) ship.go(time, hole1);
+		//Обработка меню
+		if (isMenu || isFall)
+		{
+			if (menu.click(window) == 1) return true;
+			if (menu.click(window) == 3) isMenu = !isMenu;
+		}
 
+		//Взаимодействие корабля и черных дыр
+		if (!isFall) hole2.come(time, ship);//черная дыра притягивает, если корабль еще не упал
+		if (!isFall) hole1.come(time, ship);//--//--
+		hole1.destroy(window, ship, &isFall);//разрушение корабля, если подлетит близко
+		hole2.destroy(window, ship, &isFall);//--//--
+		if (!isMove) ship.go(time, hole1, hole2);//непосредственно функция движения корабля
+
+		//Рисование всего
 		window.clear();
 		window.draw(spconvas);
 		window.draw(hole1.sprite);
+		window.draw(hole2.sprite);
 		if(!isFall) window.draw(ship.sprite);
 		window.draw(arrow.sprite);
-		window.draw(menu.spriteNew);
-		window.draw(menu.spriteExit);
+		if (isMenu || isFall)
+		{
+			window.draw(menu.sprite);
+			window.draw(menu.txt4);
+			window.draw(menu.txt1);
+			window.draw(menu.txt2);
+			window.draw(menu.txt3);
+		}
 		if (isFall)
 		{
 			Blink blink(ship.x, ship.y);
 			window.draw(blink.sprite);
+			lose(window);
 		}
 		window.display();
 	}
@@ -296,10 +359,6 @@ void gameRunning()
 {
 	if (startGame()) { gameRunning(); }
 }
-
-
-
-
 
 
 int main()
