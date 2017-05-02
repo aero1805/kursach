@@ -6,9 +6,12 @@
 #include "Ship.h"*/
 using namespace sf;
 
+Settings settings;
+int isLose;
+bool isWin;
 class Hole;
 class Ship;
-
+void lose(int, bool*);
 //Класс ветор
 class Vector
 {
@@ -22,6 +25,7 @@ public:
 	Vector& operator - (Vector&);
 	void operator = (Vector&);
 	Vector& operator * (float);
+	float mod();
 };
 
 Vector::Vector(float a, float b)
@@ -52,6 +56,10 @@ Vector& Vector::operator*(float a)
 {
 	Vector b(x*a, y*a);
 	return b;
+}
+float Vector::mod()
+{
+	return sqrt(x*x + y*y);
 }
 
 //Класс блик
@@ -131,7 +139,9 @@ public:
 	Sprite sprite;
 	Ship(String, float, float);
 	~Ship() { delete v; };
-	void go(float, Hole&, Hole&);
+	void go(float, Hole&, Hole&, Hole&, bool*, bool*);
+	void disappear(bool*);
+	void finish(bool*);
 };
 
 Ship::Ship(String F, float X, float Y)
@@ -146,6 +156,17 @@ Ship::Ship(String F, float X, float Y)
 	sprite.setTexture(texture);
 	sprite.setScale(0.03, 0.02);
 	sprite.setPosition(x, y);
+}
+void Ship::disappear(bool* isFall)
+{
+	if ((y < 0 || y > 768) && x < 1340) lose(2, isFall);
+}
+void Ship::finish(bool* isWin)
+{
+	if (x >= 1341)
+	{
+		*isWin = true;
+	}
 }
 
 
@@ -170,11 +191,11 @@ public:
 
 Hole::Hole(String F, float X, float Y, double M)
 {
+
 	File = F;
 	x = X;
 	y = Y;
 	m = M;
-	r = 0;
 	v = new Vector;
 
 	image.loadFromFile("images/" + F);
@@ -185,17 +206,18 @@ Hole::Hole(String F, float X, float Y, double M)
 void Hole::come(float time, Ship& ship)
 {
 	r = sqrt(pow((ship.x - (x + 70)), 2) + pow((ship.y - (y + 70)), 2));
-	v->x = m*((x + 70) - ship.x) / pow(r, 3);
-	v->y = m*((y + 70) - ship.y) / pow(r, 3);
+	v->x = (m * 100)*((x + 70) - ship.x) / pow(r, 3);
+	v->y = (m * 100)*((y + 70) - ship.y) / pow(r, 3);
 }
 void Hole::destroy(RenderWindow& window, Ship& ship, bool* isFall)
 {
+	if (m != 0)
 	if (IntRect(x, y, 140, 140).contains(ship.x, ship.y))
 	{ ship.v->x = 0; 
 	ship.v->y = 0;
 	v->x = 0;
 	v->y = 0;
-	*isFall = true;
+	lose(1, isFall);
 	}
 }
 
@@ -209,23 +231,25 @@ void Arrow::move(RenderWindow& window, Ship& ship)
 	float rotation = (atan2(Y, X)) * 180 / 3.14159265 - 45;
 	sprite.setRotation(rotation);
 	float k = sqrt(pow(X, 2) + pow(Y, 2)) / 1000;
-	size = fmin(k, 0.2);
+	size = fmin(k, 0.5);
 	sprite.setScale(size, size);
 	ship.v->x = 10 * size*cos((rotation + 45)*3.14159265 / 180);
 	ship.v->y = 10 * size*sin((rotation + 45)*3.14159265 / 180);
 }
 
 //Метод движения корабля
-void Ship::go(float time, Hole& hole1, Hole& hole2)
+void Ship::go(float time, Hole& hole1, Hole& hole2, Hole& hole3, bool* isFall, bool* isWin)
 {
-	Vector c(v->x + hole1.v->x*time + hole2.v->x*time, v->y + hole1.v->y*time + hole2.v->y*time);
-	x += c.x*time;
-	y += c.y*time;
-	hole1.v->x = 0;
-	hole1.v->y = 0;
-	hole2.v->x = 0;
-	hole2.v->y = 0;
+	//Vector c(v->x + hole1.v->x + hole2.v->x + hole3.v->x, v->y + hole1.v->y + hole2.v->y + hole3.v->y);
+	x += (v->x + hole1.v->x*time + hole2.v->x*time + hole3.v->x*time)*time;
+	y += (v->y + hole1.v->y*time + hole2.v->y*time + hole3.v->y*time)*time;
+
+	v->x = v->x + hole1.v->x + hole2.v->x + hole3.v->x;
+	v->y = v->y + hole1.v->y + hole2.v->y + hole3.v->y;
+
 	sprite.setPosition(x, y);
+	disappear(isFall);
+	if(!*isFall) finish(isWin);
 }
 
 //функция движения корабля вверх-вниз на старте игры
@@ -246,15 +270,17 @@ void moveship(Ship& ship, Arrow& arrow, float time)
 	arrow.sprite.setPosition(ship.x + 20, ship.y + 10);
 }
 /////////////////////////////////////////////////
-void lose(RenderWindow& window)
+void lose(int k, bool* isFall)
 {
-	Font font;
-	font.loadFromFile("spacefont.ttf");
-	Text text("", font, 40);
-	text.setString(L"    Ваш корабль пропал\nза горизонтом событий");
-	text.setPosition(90, 285);
-	
-	window.draw(text);
+	if (k == 1)
+	{
+		isLose = 1;
+	}
+	if (k == 2)
+	{
+		isLose = 2;
+	}
+	*isFall = true;
 }
 /////////////////////////////////////////////////
 //Функция начала игры (почти что main)
@@ -267,11 +293,15 @@ bool startGame()
 	bool onMenu = false;
 	bool isMenu = false;
 	bool cont = false;
+	bool isSettings = false;
+	isLose = 0;
+	isWin = false;
 	Clock clock;
-	Arrow arrow("arrow.png", 20, 400);
+	Arrow arrow("arrow2.png", 20, 400);
 	Ship ship("ship.png", 0, 390);
-	Hole hole1("hole.png", 400, 100, 10000), hole2("hole.png", 700, 500, 10000);
-	Menu menu(1075, 160, 1205, 200, 1055, 120);
+	Hole hole1("hole.png", 600, 50, settings.m[0]), hole2("hole.png", 500, 600, settings.m[1]), hole3("hole.png", 800, 150, settings.m[2]);
+	Menu menu;
+	
 
 	//фон
 	Image imconvas;
@@ -301,14 +331,16 @@ bool startGame()
 		Event event;
 		float time = clock.getElapsedTime().asMicroseconds();
 		clock.restart();
-		time = time / 5000;
+		time = time / 10000;
 
 		if (Keyboard::isKeyPressed(Keyboard::Tab))
 		{
 			isMenu = !isMenu;
 		}
 		
-
+		hole1.m = settings.m[0];
+		hole2.m = settings.m[1];
+		hole3.m = settings.m[2];
 		
 		while (window.pollEvent(event))
 		{
@@ -320,7 +352,7 @@ bool startGame()
 			if(!cont) onMenu = menu.onMenu;
 			cont = false;
 			if (isMove) arrow.move(window, ship);
-			if (event.type == Event::MouseButtonReleased)
+			if (event.type == Event::MouseButtonPressed)
 				if (event.key.code == Mouse::Left)
 				{
 					if(!onMenu) isMove = false;
@@ -328,40 +360,76 @@ bool startGame()
 		}
 
 		//Обработка меню
-		if (isMenu || isFall)
+		if (isMenu || isFall || isWin)
 		{
-			if (menu.click(window) == 1) return true;
-			if (menu.click(window) == 3) { isMenu = !isMenu; cont = true; menu.onMenu = false; };
+			if (menu.click(window, settings) == 1) return true;
+			if (menu.click(window, settings) == 3) { isMenu = !isMenu; cont = true; menu.onMenu = false; };
+			if (menu.click(window, settings) == 5) { isSettings = true; }
 		}
 
 		//Взаимодействие корабля и черных дыр
 		if (!isFall) hole2.come(time, ship);//черная дыра притягивает, если корабль еще не упал
 		if (!isFall) hole1.come(time, ship);//--//--
+		if (!isFall) hole3.come(time, ship);
 		hole1.destroy(window, ship, &isFall);//разрушение корабля, если подлетит близко
 		hole2.destroy(window, ship, &isFall);//--//--
-		if (!isMove) ship.go(time, hole1, hole2);//непосредственно функция движения корабля
+		hole3.destroy(window, ship, &isFall);//--//--
+		if (!isMove && !isFall) ship.go(time, hole1, hole2, hole3, &isFall, &isWin);//непосредственно функция движения корабля
+
+		/////////////////////////////////////////////////////
 
 		//Рисование всего
 		window.clear();
-		window.draw(spconvas);
-		window.draw(hole1.sprite);
-		window.draw(hole2.sprite);
-		window.draw(spline);
-		if(!isFall) window.draw(ship.sprite);
-		window.draw(arrow.sprite);
-		if (isMenu || isFall)
+		window.draw(spconvas);//фон
+		if (hole1.m != 0) window.draw(hole1.sprite);//черная дыра 1
+		if (hole2.m != 0) window.draw(hole2.sprite);//черная дыра 2
+		if (hole3.m != 0) window.draw(hole3.sprite);//черная дыра 3
+		if(!isFall && !isWin) window.draw(ship.sprite); //корабль, если он не упал/пропал
+		window.draw(spline); //линия финиша
+		window.draw(arrow.sprite);//стрелка направления
+
+		//меню
+		if (isMenu || isFall || isWin) 
 		{
-			window.draw(menu.sprite);
-			window.draw(menu.txt4);
-			window.draw(menu.txt1);
-			window.draw(menu.txt2);
-			window.draw(menu.txt3);
+			menu.click(window, settings);
+			if(isSettings) settings.show(window, &isSettings, &isMenu, &cont); //если нажали на настройки
 		}
-		if (isFall)
+		
+
+		if (isFall) 
+		//если проиграли
 		{
-			Blink blink(ship.x, ship.y);
-			window.draw(blink.sprite);
-			lose(window);
+			Blink blink(ship.x, ship.y); 
+			if(isLose == 1) window.draw(blink.sprite); //блик если упал в дыру
+			Font font;
+			font.loadFromFile("spacefont.ttf");
+			Text text("", font, 40);
+			text.setPosition(90, 285);
+			//сбщ на экран в разных случаях проигрыша 
+			if (isLose == 1)
+			{
+				text.setString(L"    Ваш корабль пропал\nза горизонтом событий");
+				isLose = 1;
+				window.draw(text);
+			}
+			if (isLose == 2)
+			{
+				text.setString(L"  Ваш корабль скрылся\n  в просторах космоса");
+				isLose = 2;
+				window.draw(text);
+			}
+
+		}
+
+		//если выиграли 
+		if (isWin)
+		{
+			Font font;
+			font.loadFromFile("spacefont.ttf");
+			Text text("", font, 40);
+			text.setPosition(90, 285);
+			text.setString(L"     Congratulations!");
+			window.draw(text);
 		}
 		window.display();
 	}
