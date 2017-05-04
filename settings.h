@@ -55,7 +55,7 @@ Settings& Settings::minusm(int i)
 	if (m[i] >= 20) m[i] -= 10;
 	return *this;
 }
-void Settings::show(RenderWindow& window, bool* isSettings, bool* isMenu, bool* cont)
+void Settings::show(RenderWindow& window, bool* isSettings, bool* isMenu, bool* onMenu)
 {
 	
 	for (int i = amount; i < 3; i++)
@@ -192,7 +192,7 @@ void Settings::show(RenderWindow& window, bool* isSettings, bool* isMenu, bool* 
 		OK.setFillColor(Color(0, 0, 255));
 	}
 
-	change(window, isSettings, isMenu, cont);
+	change(window, isSettings, isMenu, onMenu);
 	//рисование//
 	window.draw(txt0);
 	//настройки количества
@@ -228,7 +228,7 @@ void Settings::show(RenderWindow& window, bool* isSettings, bool* isMenu, bool* 
 	window.draw(OK);	
 }
 
-void Settings::change(RenderWindow& window, bool* isSettings, bool* isMenu, bool* cont)
+void Settings::change(RenderWindow& window, bool* isSettings, bool* isMenu, bool* onMenu)
 {
 	if (IntRect(1245, 375, 20, 20).contains(Mouse::getPosition(window)))
 		if (Mouse::isButtonPressed(Mouse::Left))
@@ -286,7 +286,7 @@ void Settings::change(RenderWindow& window, bool* isSettings, bool* isMenu, bool
 	if (IntRect(1060, 490, 100, 70).contains(Mouse::getPosition(window)))
 		if (Mouse::isButtonPressed(Mouse::Left))
 		{
-			*isSettings = false; *isMenu = false; /**cont = true;*/
+			*isSettings = false; *isMenu = false; *onMenu = false;
 		}
 
 }

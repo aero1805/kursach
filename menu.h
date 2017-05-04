@@ -7,6 +7,7 @@ using namespace sf;
 class Menu
 {
 public:
+	bool isExit;
 	bool onMenu;
 	Image image;
 	Texture texture;
@@ -17,12 +18,13 @@ public:
 	Menu();
 	int click(RenderWindow&, Settings& settings);
 	~Menu() {};
+	void confirm(RenderWindow&);
 };
 
 Menu::Menu()
 {
 	onMenu = false;
-
+	isExit = false;
 	menuNum = 0;
 	font.loadFromFile("spacefont.ttf");
 
@@ -81,10 +83,10 @@ int Menu::click(RenderWindow& window, Settings& settings)
 	{
 		switch (menuNum)
 		{
-		case 1: { return 1; break; }
-		case 2: { window.close(); break; }
-		case 3: {return 3; break; }
-		case 5: {return 5; break; }
+		case 1: { return 1; }
+		case 2: { return 2; }
+		case 3: { return 3; }
+		case 5: { return 5; }
 		}
 	}
 	window.draw(sprite);
@@ -93,4 +95,54 @@ int Menu::click(RenderWindow& window, Settings& settings)
 	window.draw(txt2);
 	window.draw(txt3);
 	window.draw(txt5);
+}
+
+void Menu::confirm(RenderWindow& window)
+{
+	onMenu = true;
+
+	Sprite sprite1;
+	sprite1.setTexture(texture);
+	sprite1.setTextureRect(IntRect(400, 300, 390, 300));
+	sprite1.setPosition(350, 200);
+
+	Text txtexit("", font, 50);
+	txtexit.setString(L"Выйти?");
+	txtexit.setPosition(410, 250);
+
+	Text yes("", font, 30);
+	yes.setString(L"Да");
+	yes.setPosition(400, 400);
+	yes.setFillColor(Color(255, 255, 255));
+
+	Text no("", font, 30);
+	no.setString(L"Нет");
+	no.setPosition(600, 400);
+	no.setFillColor(Color(255, 255, 255));
+
+	if (IntRect(400, 400, 60, 30).contains(Mouse::getPosition(window)))
+	{
+		yes.setFillColor(Color(0, 0, 255));
+		if (Mouse::isButtonPressed(Mouse::Left))
+		{
+			window.close();
+		}
+	}
+
+	if (IntRect(600, 400, 90, 30).contains(Mouse::getPosition(window)))
+	{
+		no.setFillColor(Color(0, 0, 255));
+		if (Mouse::isButtonPressed(Mouse::Left))
+		{
+			onMenu = false;
+			isExit = false;
+			
+		}
+	}
+
+
+		window.draw(sprite1);
+		window.draw(txtexit);
+		window.draw(yes);
+		window.draw(no);
 }

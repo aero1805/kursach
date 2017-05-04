@@ -160,7 +160,7 @@ Ship::Ship(String F, float X, float Y)
 }
 void Ship::disappear(bool* isFall)
 {
-	if ((y < 0 || y > 768) && x < 1340) lose(2, isFall);
+	if ((y < 0 || y > 768) && x < 1340 && !isWin) lose(2, isFall);
 }
 void Ship::finish(bool* isWin)
 {
@@ -178,6 +178,7 @@ class Hole
 {
 	//friend Ship;
 public:
+	bool isSelected;
 	Vector *v;
 	float  r;
 	int x, y;
@@ -185,16 +186,17 @@ public:
 	String File;
 	Image image;
 	Texture texture;
-	Sprite sprite;
+	Sprite sprite, spriteSelected;
 	Hole(String, float, float, double);
 	~Hole() { delete v; };
 	void come(float time, Ship& ship);
 	void destroy(RenderWindow&, Ship&, bool*);
+	void changePosition(RenderWindow&);
 };
 
 Hole::Hole(String F, float X, float Y, double M)
 {
-
+	isSelected = false;
 	File = F;
 	x = X;
 	y = Y;
@@ -205,6 +207,8 @@ Hole::Hole(String F, float X, float Y, double M)
 	texture.loadFromImage(image);
 	sprite.setTexture(texture);
 	sprite.setPosition(x, y);
+	spriteSelected.setTexture(texture);
+	spriteSelected.setPosition(x, y);
 }
 void Hole::come(float time, Ship& ship)
 {
@@ -215,7 +219,7 @@ void Hole::come(float time, Ship& ship)
 void Hole::destroy(RenderWindow& window, Ship& ship, bool* isFall)
 {
 	if (m != 0)
-		if (IntRect(x, y, 140, 140).contains(ship.x, ship.y))
+		if (IntRect(x + 5, y + 5, 140, 140).contains(ship.x, ship.y))
 		{
 			ship.v->x = 0;
 			ship.v->y = 0;
@@ -223,6 +227,25 @@ void Hole::destroy(RenderWindow& window, Ship& ship, bool* isFall)
 			v->y = 0;
 			lose(1, isFall);
 		}
+}
+void Hole::changePosition(RenderWindow& window)
+{
+	if(IntRect(x, y, 150, 150).contains(Mouse::getPosition(window)))
+		if(Mouse::isButtonPressed(Mouse::Right))
+		{
+			spriteSelected.setColor(Color(0, 0, 255, 128));
+			isSelected = true;
+		}
+
+	if (isSelected)
+		if(Mouse::isButtonPressed(Mouse::Left))
+	{
+			x = Mouse::getPosition(window).x - 75;
+			y = Mouse::getPosition(window).y - 75;
+			sprite.setPosition(x, y);
+			spriteSelected.setPosition(x, y);
+		isSelected = false;
+	}
 }
 
 //Метод движения стрелочки (задания начальной скорости корабля)
