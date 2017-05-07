@@ -56,7 +56,6 @@ Menu::Menu()
 	sprite.setTextureRect(IntRect(300, 0, 400, 860));
 	sprite.setPosition(1050, 0);
 }
-
 int Menu::click(RenderWindow& window, Settings& settings)
 {
 	txt1.setFillColor(Color(255, 255, 255));
@@ -96,7 +95,6 @@ int Menu::click(RenderWindow& window, Settings& settings)
 	window.draw(txt3);
 	window.draw(txt5);
 }
-
 void Menu::confirm(RenderWindow& window)
 {
 	onMenu = true;

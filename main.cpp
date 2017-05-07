@@ -9,7 +9,6 @@ using namespace sf;
 Settings settings;
 Hole hole1("hole.png", 650, 370, settings.m[0]), hole2("hole.png", 500, 600, settings.m[1]), hole3("hole.png", 800, 150, settings.m[2]);
 
-//Функция начала игры (почти что main)
 bool startGame()
 {
 	RenderWindow window(VideoMode(1366, 768), "Kursach", Style::Fullscreen);
@@ -21,12 +20,10 @@ bool startGame()
 	bool isSettings = false;
 	isLose = 0;
 	isWin = false;
-	Clock clock;
+	Clock clock, musicclock;
 	Arrow arrow("arrow2.png", 20, 400);
 	Ship ship("ship.png", 0, 390);
 	Menu menu;
-	
-
 	//фон
 	Image imconvas;
 	imconvas.loadFromFile("images/stars.jpg");
@@ -35,7 +32,6 @@ bool startGame()
 	Sprite spconvas;
 	spconvas.setTexture(txconvas);
 	spconvas.setPosition(0, 0);
-
 	//линия финиша
 	Image imline;
 	imline.loadFromFile("images/line.png");
@@ -46,25 +42,30 @@ bool startGame()
 	spline.setTextureRect(IntRect(0, 0, 25, 577));
 	spline.setScale(1, 1.33);
 	spline.setPosition(1341, 0);
+	//Звук на фоне
+	Music music;
+	music.openFromFile("sounds/Muse.ogg");
+	music.play();
 
-
-
+	float musictime = 0;
 	while (window.isOpen())
 	{
-		Vector2i pixelPos = Mouse::getPosition(window);
 		Event event;
 		float time = clock.getElapsedTime().asMicroseconds();
 		clock.restart();
 		time = time / 15000;
+		musictime = musicclock.getElapsedTime().asSeconds();
+		if (musictime > 143) { music.play(); musictime = 0; musicclock.restart(); }
 
-		if (Keyboard::isKeyPressed(Keyboard::Tab))
+		if (Keyboard::isKeyPressed(Keyboard::Tab)) //вызов меню по клавиде tab
 		{
 			isMenu = !isMenu;
 		}
 		
-		hole1.m = settings.m[0];
-		hole2.m = settings.m[1];
-		hole3.m = settings.m[2];
+		//установка масс черных дыр
+		hole1.setM(settings.m[0]);
+		hole2.setM(settings.m[1]);
+		hole3.setM(settings.m[2]);
 		
 		//цикл обработки событий
 		while (window.pollEvent(event))
@@ -82,13 +83,13 @@ bool startGame()
 				}
 			if (isSettings)
 			{
-				if (hole1.m != 0) hole1.changePosition(window);
-				if (hole2.m != 0) hole2.changePosition(window);
-				if (hole3.m != 0) hole3.changePosition(window);
+				if (hole1.getM() != 0) hole1.changePosition(window);
+				if (hole2.getM() != 0) hole2.changePosition(window);
+				if (hole3.getM() != 0) hole3.changePosition(window);
 			}
 		}
 
-		//Обработка клика по меню
+		//Вызов и обработка меню
 		if (isMenu || isFall || isWin)
 		{
 			switch (menu.click(window, settings))
@@ -98,15 +99,10 @@ bool startGame()
 			case 3: { isMenu = !isMenu;  menu.onMenu = false; break; };
 			case 5: { isSettings = true; break; }
 			}
-			/*if (menu.click(window, settings) == 1) return true;
-			if (menu.click(window, settings) == 3) { isMenu = !isMenu;  menu.onMenu = false; };
-			if (menu.click(window, settings) == 5) { isSettings = true; }*/
 		}
 
-		
-
 		//Взаимодействие корабля и черных дыр
-		if (!isFall || !isWin)
+		if (!isFall && !isWin)
 		{
 			hole2.come(time, ship);//черная дыра притягивает, если корабль еще не упал
 			hole1.come(time, ship);//--//--
@@ -115,24 +111,23 @@ bool startGame()
 		hole1.destroy(window, ship, &isFall);//разрушение корабля, если подлетит близко
 		hole2.destroy(window, ship, &isFall);//--//--
 		hole3.destroy(window, ship, &isFall);//--//--
-		if (!isMove && !isFall) ship.go(time, hole1, hole2, hole3, &isFall, &isWin);//непосредственно функция движения корабля
-
-		/////////////////////////////////////////////////////
+		if (!isMove && !isFall && !isWin) ship.go(time, hole1, hole2, hole3, &isFall, &isWin);//непосредственно функция движения корабля
+		if (isMove || isFall || isWin) ship.soundpouse();
 
 		//Рисование всего
 		window.clear();
 		window.draw(spconvas);//фон
-		if (hole1.m != 0 && !hole1.isSelected) window.draw(hole1.sprite);//черная дыра 1 если не выбрана
-		if (hole2.m != 0 && !hole2.isSelected) window.draw(hole2.sprite);//черная дыра 2 если не выбрана	
-		if (hole3.m != 0 && !hole3.isSelected) window.draw(hole3.sprite);//черная дыра 3 если не выбрана
+		if (hole1.getM() != 0 && !hole1.getisSelected()) window.draw(hole1.getSprite());//черная дыра 1 если не выбрана
+		if (hole2.getM() != 0 && !hole2.getisSelected()) window.draw(hole2.getSprite());//черная дыра 2 если не выбрана	
+		if (hole3.getM() != 0 && !hole3.getisSelected()) window.draw(hole3.getSprite());//черная дыра 3 если не выбрана
 
-		if (hole1.m != 0 && hole1.isSelected) window.draw(hole1.spriteSelected);//черная дыра 1 если выбрана
-		if (hole2.m != 0 && hole2.isSelected) window.draw(hole2.spriteSelected);//черная дыра 2 если выбрана	
-		if (hole3.m != 0 && hole3.isSelected) window.draw(hole3.spriteSelected);//черная дыра 3 если выбрана
+		if (hole1.getM() != 0 && hole1.getisSelected()) window.draw(hole1.getSpriteSelected());//черная дыра 1 если выбрана
+		if (hole2.getM() != 0 && hole2.getisSelected()) window.draw(hole2.getSpriteSelected());//черная дыра 2 если выбрана	
+		if (hole3.getM() != 0 && hole3.getisSelected()) window.draw(hole3.getSpriteSelected());//черная дыра 3 если выбрана
 
-		if(!isFall && !isWin) window.draw(ship.sprite); //корабль, если он не упал/пропал
+		if(!isFall && !isWin) window.draw(ship.getSprite()); //корабль, если он не упал/пропал
 		window.draw(spline); //линия финиша
-		window.draw(arrow.sprite);//стрелка направления
+		window.draw(arrow.getSprite());//стрелка направления
 
 		//меню
 		if (isMenu || isFall || isWin) 
@@ -147,8 +142,8 @@ bool startGame()
 		if (isFall) 
 		//если проиграли
 		{
-			Blink blink(ship.x - 100, ship.y - 100); 
-			if(isLose == 1) window.draw(blink.sprite); //блик если упал в дыру
+			Blink blink(ship.getX() - 100, ship.getY() - 100); 
+			if(isLose == 1) window.draw(blink.getSprite()); //блик если упал в дыру
 			Font font;
 			font.loadFromFile("spacefont.ttf");
 			Text text("", font, 40);
@@ -157,19 +152,15 @@ bool startGame()
 			if (isLose == 1)
 			{
 				text.setString(L"    Ваш корабль пропал\nза горизонтом событий");
-				isLose = 1;
 				window.draw(text);
 			}
 			if (isLose == 2)
 			{
 				text.setString(L"  Ваш корабль скрылся\n  в просторах космоса");
-				isLose = 2;
 				window.draw(text);
 			}
 
 		}
-		
-
 		//если выиграли 
 		if (isWin)
 		{
@@ -191,7 +182,6 @@ void gameRunning()
 {
 	if (startGame()) { gameRunning(); }
 }
-
 
 int main()
 {
