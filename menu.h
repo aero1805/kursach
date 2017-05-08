@@ -6,7 +6,6 @@ using namespace sf;
 
 class Menu
 {
-public:
 	bool isExit;
 	bool onMenu;
 	Image image;
@@ -15,10 +14,22 @@ public:
 	int menuNum;
 	Font font;
 	Text txt1, txt2, txt3, txt4, txt5;
+public:
 	Menu();
 	int click(RenderWindow&, Settings& settings);
 	~Menu() {};
 	void confirm(RenderWindow&);
+	bool getisExit() { return isExit; }
+	bool& getonMenu() { return onMenu; }
+	Sprite& getSprite() { return sprite; }
+	int getmenuNum() { return menuNum; }
+	Text gettxt1() { return txt1; }
+	Text gettxt2() { return txt2; }
+	Text gettxt3() { return txt3; }
+	Text gettxt4() { return txt4; }
+	Text gettxt5() { return txt5; }
+	void setisExit(bool is) { isExit = is; }
+	void setonMenu(bool on) { onMenu = on; }
 };
 
 Menu::Menu()
@@ -69,7 +80,7 @@ int Menu::click(RenderWindow& window, Settings& settings)
 		else
 			if (IntRect(1055, 120, 440, 35).contains(Mouse::getPosition(window))) { txt3.setFillColor(Color(0, 0, 255)), menuNum = 3; onMenu = true;}
 			else
-				if (IntRect(1090, 200, 440, 35).contains(Mouse::getPosition(window))) { txt5.setFillColor(Color(0, 0, 255)), menuNum = 5; onMenu = true; }
+				if (IntRect(1090, 200, 440, 35).contains(Mouse::getPosition(window))) { txt5.setFillColor(Color(0, 0, 255)), menuNum = 4; onMenu = true; }
 				else
 				if (IntRect(1050, 0, 416, 768).contains(Mouse::getPosition(window))) onMenu = true;
 				else
@@ -85,7 +96,7 @@ int Menu::click(RenderWindow& window, Settings& settings)
 		case 1: { return 1; }
 		case 2: { return 2; }
 		case 3: { return 3; }
-		case 5: { return 5; }
+		case 4: { return 4; }
 		}
 	}
 	window.draw(sprite);

@@ -121,7 +121,7 @@ class Ship
 {
 	Vector *v;
 	int x, y;
-	String File;
+	String file;
 	Image image;
 	Texture texture;
 	Sprite sprite;
@@ -156,7 +156,7 @@ Ship::Ship(String F, float X, float Y)
 	v = new Vector;
 	x = X;
 	y = Y;
-	File = F;
+	file = F;
 	image.loadFromFile("images/" + F);
 	image.createMaskFromColor(Color(255, 255, 255));
 	texture.loadFromImage(image);
@@ -200,7 +200,7 @@ class Hole
 	float  r;
 	int x, y;
 	float m;
-	String File;
+	String file;
 	Image image;
 	Texture texture;
 	Sprite sprite, spriteSelected;
@@ -231,7 +231,7 @@ public:
 Hole::Hole(String F, float X, float Y, double M)
 {
 	isSelected = false;
-	File = F;
+	file = F;
 	x = X;
 	y = Y;
 	m = M;

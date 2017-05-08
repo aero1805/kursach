@@ -1,17 +1,13 @@
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <math.h>
-#include "menu.h"
 #include "Header.h"
 using namespace sf;
 
 Settings settings;
-Hole hole1("hole.png", 650, 370, settings.m[0]), hole2("hole.png", 500, 600, settings.m[1]), hole3("hole.png", 800, 150, settings.m[2]);
+Hole hole1("hole.png", 650, 370, settings.getM(0)), hole2("hole.png", 500, 600, settings.getM(1)), hole3("hole.png", 800, 150, settings.getM(2));
 
 bool startGame()
 {
-	RenderWindow window(VideoMode(1366, 768), "Kursach", Style::Fullscreen);
+	RenderWindow window(VideoMode(1366, 768), "Game", Style::Fullscreen);
 	window.setVerticalSyncEnabled(true);//Вертикальная синхронизация кадров с монитором
 	bool isMove = true;
 	bool isFall = false;
@@ -63,9 +59,9 @@ bool startGame()
 		}
 		
 		//установка масс черных дыр
-		hole1.setM(settings.m[0]);
-		hole2.setM(settings.m[1]);
-		hole3.setM(settings.m[2]);
+		hole1.setM(settings.getM(0));
+		hole2.setM(settings.getM(1));
+		hole3.setM(settings.getM(2));
 		
 		//цикл обработки событий
 		while (window.pollEvent(event))
@@ -95,9 +91,9 @@ bool startGame()
 			switch (menu.click(window, settings))
 			{
 			case 1: return true;
-			case 2: { menu.isExit = true; break; }
-			case 3: { isMenu = !isMenu;  menu.onMenu = false; break; };
-			case 5: { isSettings = true; break; }
+			case 2: { menu.setisExit(true); break; }
+			case 3: { isMenu = !isMenu;  menu.setonMenu(false); break; };
+			case 4: { isSettings = true; break; }
 			}
 		}
 
@@ -133,7 +129,7 @@ bool startGame()
 		if (isMenu || isFall || isWin) 
 		{
 			menu.click(window, settings);
-			if(isSettings) settings.show(window, &isSettings, &isMenu, &menu.onMenu); //если нажали на настройки
+			if(isSettings) settings.show(window, &isSettings, &isMenu, &menu.getonMenu()); //если нажали на настройки
 		}
 		
 
@@ -172,7 +168,7 @@ bool startGame()
 			window.draw(text);
 		}
 
-		if (menu.isExit) menu.confirm(window);//подтверждение выхода
+		if (menu.getisExit()) menu.confirm(window);//подтверждение выхода
 		window.display();
 	}
 }

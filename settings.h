@@ -6,10 +6,9 @@ using namespace sf;
 
 class Settings
 {
-public:
 	int amount;
-	int m[3];
-
+	float m[3];
+public:
 	Settings();
 	Settings(int, int[]);
 	Settings& operator ++();
@@ -19,6 +18,10 @@ public:
 	~Settings() {};
 	void show(RenderWindow&, bool*, bool*, bool*);
 	void change(RenderWindow&, bool*, bool*, bool*);
+	int getAmount() { return amount; }
+	int getM(int i) { return m[i]; }
+	void setAmount(int am) { amount = am; }
+	void setM(int i, float M) { m[i] = M; }
 };
 
 Settings::Settings()
@@ -288,5 +291,4 @@ void Settings::change(RenderWindow& window, bool* isSettings, bool* isMenu, bool
 		{
 			*isSettings = false; *isMenu = false; *onMenu = false;
 		}
-
 }
